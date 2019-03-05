@@ -4,6 +4,8 @@ import string
 import math
 import time
 
+# Genetic Algorithm Solution for First Domain
+
 class Location:
 	def __init__(self, label, x, y):
 		self.label = label
@@ -36,10 +38,10 @@ def genetic(locations, term_criteria, mutation_rate, init_pop):
 		pop = [ (y,x) for x, y in zip(population, fitness_vals)]
 		# STEP 3: Select parents for crossover
 		# Maybe want 2-3 new children each iteration?
-		parent1, parent2 = select_parents(pop)
+		#parent1, parent2 = select_parents(pop)
 		# STEP 4: Generate child from crosssover of parents
 		# STEP 5: Mutation of child will happen in crossover function at random
-		child = crossover(pop[0], pop[1], mutation_rate)
+		#child = crossover(pop[0], pop[1], mutation_rate)
 		pop.sort(reverse=True)
 		# Check if algorithm should be terminated
 		# Termination criteria is runtime of algorithm surpasses given time
@@ -48,8 +50,7 @@ def genetic(locations, term_criteria, mutation_rate, init_pop):
 			best_path = pop[0]
 			break
 		# Prune population for next iteration
-		fitness_vals = []
-		population = prune_pop(pop)
+		#population = prune_pop(pop)
 	return best_path
 
 # Calculate the fitness of a state
@@ -84,6 +85,7 @@ def get_location(label, locations):
 	for l in locations:
 		if l.has_label(label):
 			return l
+	return None
 
 # Mutate child by swapping two locations at random
 def mutate(state):
@@ -111,7 +113,7 @@ def crossover(state1, state2, mutation_rate):
 def select_parents(pop):
 	pass
 
-# Prune population
+# Prune population, should just return states
 # TODO: Prune population for next iteration
 # Maybe just replace lowest fitness states with children?
 def prune_pop(pop):
@@ -130,7 +132,17 @@ def read_data(fname):
 		for l in f.readlines():
 			l = l.split(" ")
 			locations.append(Location(l[0], l[1], l[2]))
+	f.close()
 	return locations
+
+def write_path_to_file(path, locs, fname="output.txt"):
+	with open(fname, 'w+') as f:
+		for i in range(len(path)):
+			loc = get_location(path[i], locs)
+			x, y = loc.get_coords()
+			f.write(str(x) + "," + str(y) + "\n")
+	f.close()
+
 
 def main(args):
 	fname = args.filename
@@ -145,7 +157,8 @@ def main(args):
 		init_pop = 10
 	locations = read_data(fname)
 	best_path = genetic(locations, term_criteria, mutation_rate, init_pop)
-	print("Best path is: " + best_path[1] + " with distance " + str(best_path[0]))
+	print("Best path is: " + best_path[1] + " with distance " + str(1/best_path[0]))
+	write_path_to_file(best_path[1], locations)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
