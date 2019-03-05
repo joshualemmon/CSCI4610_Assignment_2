@@ -35,6 +35,8 @@ def genetic(locations, term_criteria, mutation_rate, init_pop):
 		# STEP 2: Calculate fitness value for each state
 		for p in population:
 			fitness_vals.append(calc_fitness(p, locations))
+		max_path = max(fitness_vals)
+		fitness_vals = [max_path-x for x in fitness_vals]
 		pop = [ (y,x) for x, y in zip(population, fitness_vals)]
 		# STEP 3: Select parents for crossover
 		# Maybe want 2-3 new children each iteration?
@@ -42,16 +44,18 @@ def genetic(locations, term_criteria, mutation_rate, init_pop):
 		# STEP 4: Generate child from crosssover of parents
 		# STEP 5: Mutation of child will happen in crossover function at random
 		#child = crossover(pop[0], pop[1], mutation_rate)
-		pop.sort(reverse=True)
 		# Check if algorithm should be terminated
 		# Termination criteria is runtime of algorithm surpasses given time
 		# If terminated will return the most fit (i.e. shortest path) state
 		if(time.time() - start_time >= term_criteria):
-			best_path = pop[0]
+			pop.sort(reverse=True)
+			best_path = list(pop[0])
+
+			best_path[0] = max_path - best_path[0]
 			break
 		# Prune population for next iteration
 		#population = prune_pop(pop)
-	return best_path
+	return tuple(best_path)
 
 # Calculate the fitness of a state
 # Calculated by total distance of state path
@@ -62,7 +66,7 @@ def calc_fitness(state, locations):
 		loc2 = get_location(state[i+1], locations)
 
 		fitness += get_distance(loc1, loc2)
-	return 1/fitness
+	return fitness
 
 # Get random states for initial population
 # Ensures that locations are not visited twice
@@ -157,7 +161,7 @@ def main(args):
 		init_pop = 10
 	locations = read_data(fname)
 	best_path = genetic(locations, term_criteria, mutation_rate, init_pop)
-	print("Best path is: " + best_path[1] + " with distance " + str(1/best_path[0]))
+	print("Best path is: " + best_path[1] + " with distance " + str(best_path[0]))
 	write_path_to_file(best_path[1], locations)
 
 if __name__ == '__main__':
