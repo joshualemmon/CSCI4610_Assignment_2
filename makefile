@@ -10,6 +10,6 @@ domain1-minute:
 domain1-2min-20init:
 	python assign2.py -t 120 -i 20 locations.txt
 	python graph.py output.txt
-domain1-10min-40init:
-	python assign2.py -t 600 -i 100 locations.txt
+domain1-10min-100init:
+	python assign2.py -t 600 -i 100 -m 20 locations.txt
 	python graph.py output.txt

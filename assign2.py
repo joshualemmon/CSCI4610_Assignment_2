@@ -7,6 +7,8 @@ import time
 # Genetic Algorithm Solution 
 
 # Location class used for first domain
+# Nodes encoded as A-T starting in bottom left corner and
+# moving left-right while moving up a row
 class Location:
 	def __init__(self, label, x, y):
 		self.label = label
@@ -24,27 +26,49 @@ class Location:
 	def has_label(self, label):
 		return self.label == label
 
-# Class for second domain maybe?
+# Town class used for second domain
+# Each town will have a label A-G
+# Each town tracks the distance to another town with a dictionary
+class Town:
+	def __init__(self, town, label):
+		self.town = town
+		self.label = label
+		self.distances = dict()
+
+	def get_label(self):
+		return self.label
+
+	def has_label(self, label):
+		return self.label == label
+
+	def set_dist(self, label, dist):
+		self.distances[label] = dist
+
+	def get_dist(self, label):
+		return self.distances[label]
 
 # Main genetic algorithm
 # Need to expand to handle second domain
-def genetic(locations, term_criteria, mutation_rate, init_pop, crossover_method=1):
+def genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mutation_method, domain):
 	best_path = None
 	# STEP 1: Initialize population
-	population = get_initial_population(locations, init_pop)
+	population = get_initial_population(inputs, init_pop)
 	start_time = time.time()
 	# Will loop until termination criteria is met
 	while(True):
-		fitness_vals = []
+		distances = []
 		# STEP 2: Calculate fitness value for each state
 		for p in population:
-			fitness_vals.append(calc_fitness(p, locations))
-		max_path = max(fitness_vals)
-		fitness_vals = [max_path-x for x in fitness_vals]
+			distances.append(calc_distance(p, inputs, domain))
+		max_path = max(distances)
+		# Scale fitness so smaller paths are more fit
+		fitness_vals = [max_path-x for x in distances]
+		# Zip fitness value with respective population
 		pop = [ (y,x) for x, y in zip(population, fitness_vals)]
 		# STEP 3: Select parents for crossover
 		# Maybe want to pick 40% of population to be parents
 		num_parents = init_pop * 0.4
+		# Want even number of parents
 		if num_parents % 2 == 1:
 			num_parents -= 1
 		parents = select_parents(pop, num_parents)
@@ -67,22 +91,22 @@ def genetic(locations, term_criteria, mutation_rate, init_pop, crossover_method=
 
 # Calculate the fitness of a state
 # Calculated by total distance of state path
-def calc_fitness(state, locations):
-	fitness = 0
+def calc_distance(state, inputs, domain):
+	distance = 0
 	for i in range(len(state)-1):
-		loc1 = get_location(state[i], locations)
-		loc2 = get_location(state[i+1], locations)
-		fitness += get_distance(loc1, loc2)
-	return fitness
+		loc1 = get_location(state[i], inputs)
+		loc2 = get_location(state[i+1], inputs)
+		distance += get_distance(loc1, loc2, domain)
+	return distance
 
 # Get random states for initial population
 # Ensures that locations are not visited twice
-def get_initial_population(locs, init_pop):
+def get_initial_population(inputs, init_pop):
 	pop = []
 	while len(pop) < init_pop:
 		state = ''
-		unadded_chars = string.ascii_uppercase[:len(locs)]
-		while len(state) < len(locs):
+		unadded_chars = string.ascii_uppercase[:len(inputs)]
+		while len(state) < len(inputs):
 			label = unadded_chars[random.randint(0, len(unadded_chars)-1)]
 			if label not in state:
 				state += label
@@ -92,18 +116,26 @@ def get_initial_population(locs, init_pop):
 	return pop
 
 # Get location object with given label value
-def get_location(label, locations):
-	for l in locations:
-		if l.has_label(label):
-			return l
+def get_location(label, inputs):
+	for i in inputs:
+		if i.has_label(label):
+			return i
 	return None
 
 # Mutate child by swapping two locations at random
 # First mutation shuffles each half of the state independently
 # Second mutation swaps two random indices of the state
-def mutate(state, mutation=0):
+def mutate(state, mutation=1):
 	mutant = None
 	if mutation == 1:
+		i, j = 0, 0
+		while i == j:
+			i = random.randint(0, len(state)-1)
+			j = random.randint(0, len(state)-1)
+		mutant = list(state)
+		mutant[i] = state[j]
+		mutant[j] = state[i]
+	else:
 		mid = len(state)/2
 		mutant = list(state)
 		mutant_1 = mutant[:mid]
@@ -113,42 +145,38 @@ def mutate(state, mutation=0):
 		mutant = []
 		mutant.extend(mutant_1)
 		mutant.extend(mutant_2)
-	else:
-		i, j = 0, 0
-		while i == j:
-			i = random.randint(0, len(state)-1)
-			j = random.randint(0, len(state)-1)
-		mutant = list(state)
-		mutant[i] = state[j]
-		mutant[j] = state[i]
 	return ''.join(mutant)
 
 # Crossover two parent states to create child state.
-# Child will randomly mutate
+# Child will randomly mutate at rate mutation_rate
+# 1 child created per pair of parents
 def crossover(parents, mutation_rate, method=1):
 	children = []
 	while len(parents) > 0:
-		i, j = 0, 0
-		while i == j:
-			i, j = random.randint(0, len(parents)-1), random.randint(0, len(parents)-1)
-		parent1 = parents[i]
-		parent2 = parents[j]
+		if method == 1:
+			i, j = 0, 0
+			while i == j:
+				i, j = random.randint(0, len(parents)-1), random.randint(0, len(parents)-1)
+			parent1 = parents[i]
+			parent2 = parents[j]
 
-		child= ''
-		pos = random.randint(0, len(parent1) -1)
-		child += parent1[:pos]
-		child += parent2[pos:]
-		child = fix_child(child)
+			child= ''
+			pos = random.randint(0, len(parent1) -1)
+			child += parent1[:pos]
+			child += parent2[pos:]
+			child = fix_child(child)
 
-		if(random.randint(0, 99) < mutation_rate):
-			child = mutate(child)
+			if(random.randint(0, 99) < mutation_rate):
+				child = mutate(child)
 
-		children.append(child)
-		parents.remove(parent1)
-		parents.remove(parent2)
+			children.append(child)
+			parents.remove(parent1)
+			parents.remove(parent2)
+		else:
+			pass
 	return children
 
-# Remove duplicate values/add in missing values
+# Remove duplicate values/add in missing values from crossover
 def fix_child(child):
 	doubles = []
 	missing = []
@@ -161,12 +189,11 @@ def fix_child(child):
 	for i in range(len(child)):
 		if child[i] in doubles:
 			doubles.remove(child[i])
-			child[i] = missing[0]
+			child[i] = missing[random.randint(0, len(missing)-1)]
 			missing = missing[1:]
 	return ''.join(child)
 
 # Select two states to act as parents
-# TODO: Figure out method of parent selection
 def select_parents(pop, num_parents):
 	fitness_sum = 0
 	parents = []
@@ -189,8 +216,6 @@ def select_parents(pop, num_parents):
 	return parents
 
 # Prune population, should just return states
-# TODO: Prune population for next iteration
-# Maybe just replace lowest fitness states with children?
 def prune_pop(pop, children):
 	new_pop = []
 	pop.sort(reverse=True)
@@ -200,50 +225,67 @@ def prune_pop(pop, children):
 	return new_pop
 
 # Get distance between two locations
-def get_distance(loc1, loc2):
-	x1, y1 = loc1.get_coords()
-	x2, y2 = loc2.get_coords()
-	return (math.sqrt((x1-x2)**2 + (y1-y2)**2))
+def get_distance(loc1, loc2, domain):
+	if domain == 1:
+		x1, y1 = loc1.get_coords()
+		x2, y2 = loc2.get_coords()
+		return (math.sqrt((x1-x2)**2 + (y1-y2)**2))
+	else:
+		return loc1.get_dist(loc2.get_label())
 
 # Read in file
-def read_data(fname):
-	locations = []
-	with open(fname, 'r') as f:
-		for l in f.readlines():
-			l = l.split(" ")
-			locations.append(Location(l[0], l[1], l[2]))
-	f.close()
-	return locations
+def read_data(fname, domain):
+	if domain == 1:
+		locations = []
+		with open(fname, 'r') as f:
+			for l in f.readlines():
+				l = l.split(" ")
+				locations.append(Location(l[0], l[1], l[2]))
+		f.close()
+		return locations
+	else:
+		towns = []
+		with open(fname, 'r') as f:
+			for i, l in enumerate(f.readlines()):
+				vals = l.split(" ")
+				t = Town(vals[0], string.ascii_uppercase[i])
+				vals = vals[1:]
+				for j, v in enumerate(vals):
+					t.set_dist(string.ascii_uppercase[j], int(v))
+				towns.append(t)
+		f.close()
+		return towns
 
-def write_path_to_file(path, locs, fname="output.txt"):
+def write_path_to_file(path, locs, domain):
+	fname = "output.txt"
 	with open(fname, 'w+') as f:
+		f.write(str(domain) + "\n")
 		for i in range(len(path)):
 			loc = get_location(path[i], locs)
 			x, y = loc.get_coords()
 			f.write(str(x) + "," + str(y) + "\n")
 	f.close()
 
-
 def main(args):
 	fname = args.filename
 	term_criteria = args.terminate
-	if (args.mutation_rate):
-		mutation_rate = args.mutation_rate
-	else:
-		mutation_rate = 10
-	if (args.init_pop):
-		init_pop = args.init_pop
-	else:
-		init_pop = 10
-	locations = read_data(fname)
-	best_path = genetic(locations, term_criteria, mutation_rate, init_pop)
+	domain = args.domain
+	mutation_rate = args.mutation_rate
+	init_pop = args.init_pop
+	crossover_method = args.crossover_method
+	mutation_method = args.mutation_method
+	inputs = read_data(fname, domain)
+	best_path = genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mutation_method, domain)
 	print("Best path is: " + best_path[1] + " with distance " + str(best_path[0]))
-	write_path_to_file(best_path[1], locations)
+	write_path_to_file(best_path[1], inputs, domain)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-t', '--terminate', required=True, type=float)
-	parser.add_argument('-m', '--mutation_rate', type=int)
-	parser.add_argument('-i', '--init_pop', type=int)
+	parser.add_argument('-t', '--terminate', default=0, type=int)
+	parser.add_argument('-m', '--mutation_rate', default=10, type=int)
+	parser.add_argument('-c', '--crossover_method', default=1, type=int)
+	parser.add_argument('-mm', '--mutation_method', default=1, type=int)
+	parser.add_argument('-i', '--init_pop', default=10, type=int)
+	parser.add_argument('-d', '--domain', default=1, type=int)
 	parser.add_argument('filename')
 	main(parser.parse_args())
