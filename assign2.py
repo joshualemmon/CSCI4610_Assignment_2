@@ -150,6 +150,7 @@ def mutate(state, mutation=1):
 # Crossover two parent states to create child state.
 # Child will randomly mutate at rate mutation_rate
 # 1 child created per pair of parents
+# Should add edge recombination crossover for method #2, as its the most accurate
 def crossover(parents, mutation_rate, method=1):
 	children = []
 	while len(parents) > 0:
