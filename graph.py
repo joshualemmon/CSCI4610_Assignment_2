@@ -10,8 +10,9 @@ def plot_route(points):
 	plt.plot([points[0][0], points[-1][0]],[points[0][1], points[-1][1]], 'ro--')
 	plt.plot(points[0][0], points[0][1], 'bo')
 	plt.title("Blue node is starting node. Solid line is first move.")
+	plt.savefig("route.png", bbox_inches='tight')
+
 	plt.show()
-	plt.savefig("route.png")
 
 def read_data(fname):
 	points = []
