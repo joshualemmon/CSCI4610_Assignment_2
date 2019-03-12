@@ -14,8 +14,36 @@ def plot_route_1(points):
 
 	plt.show()
 
+def plot_route_2(path):
+	label_to_city = {'A': "Brighton", 'B' : "Bristol", 'C' : "Cambridge", 'D': "Glasgow", 'E': "Liverpool", 'F' : "London", 'G' : "Manchester", 'H' : "Oxford"}
+	legend = {"Brighton" : 'red', "Bristol" : 'blue', "Cambridge" : 'green', "Glasgow" : 'yellow', "Liverpool" : 'orange', "London": 'purple', "Manchester": 'pink', "Oxford" : 'brown'}
+	coords = {"Brighton" : (70, 5), "Bristol" : (30, 30), "Cambridge" : (73, 80), "Glasgow" : (5, 250), "Liverpool" : (25, 130),
+	                  "London": (70, 30), "Manchester": (40, 135), "Oxford" : (50, 40)}
+	fig, ax = plt.subplots()
+	plt.scatter(coords["Bristol"][0],coords["Bristol"][1], c=legend["Bristol"], label="Bristol")
+	plt.scatter(coords["Brighton"][0],coords["Brighton"][1], c=legend["Brighton"], label="Brighton")
+	plt.scatter(coords["London"][0],coords["London"][1], c=legend["London"], label="London")
+	plt.scatter(coords["Cambridge"][0],coords["Cambridge"][1], c=legend["Cambridge"], label="Cambridge")
+	plt.scatter(coords["Liverpool"][0],coords["Liverpool"][1], c=legend["Liverpool"], label="Liverpool")
+	plt.scatter(coords["Manchester"][0],coords["Manchester"][1], c=legend["Manchester"], label="Manchester")
+	plt.scatter(coords["Oxford"][0],coords["Oxford"][1], c=legend["Oxford"], label="Oxford")
+	plt.scatter(coords["Glasgow"][0],coords["Glasgow"][1], c=legend["Glasgow"], label="Glasgow")
+	ax.legend(bbox_to_anchor=(1.13, 1.15))
+	path = list(path)
+	title =''
+	for i in range(len(path)):
+		title += label_to_city[path[i]] + "-->"
+		if i % 3 == 0 and i > 0:
+			title +='\n'
+		t1 = coords[label_to_city[path[i-1]]]
+		t2 = coords[label_to_city[path[i]]]
+		plt.plot([t1[0], t2[0]], [t1[1], t2[1]], color='black', linestyle='dashed')
+	title = title[:-3]
+	plt.title(title, fontsize='small')
+	plt.show()
 def read_data(fname):
 	points = []
+	path = None
 	domain = -1
 	with open(fname, 'r') as f:
 		for i, l in enumerate(f.readlines()):
@@ -26,15 +54,17 @@ def read_data(fname):
 					l = l.split(",")
 					points.append((int(l[0]), int(l[1])))
 				else:
-					pass
+					path = l.strip('\n')
 	f.close()
-	return points, domain
+	return points, domain, path
 
 def main(args):
-	points, domain = read_data(args.datafile)
+	points, domain, path = read_data(args.datafile)
 	print("domain: ", domain)
 	if domain == 1:
 		plot_route_1(points)
+	if domain == 2:
+		plot_route_2(path)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()

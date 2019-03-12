@@ -261,10 +261,13 @@ def write_path_to_file(path, locs, domain):
 	fname = "output.txt"
 	with open(fname, 'w+') as f:
 		f.write(str(domain) + "\n")
-		for i in range(len(path)):
-			loc = get_location(path[i], locs)
-			x, y = loc.get_coords()
-			f.write(str(x) + "," + str(y) + "\n")
+		if domain == 1:
+			for i in range(len(path)):
+				loc = get_location(path[i], locs)
+				x, y = loc.get_coords()
+				f.write(str(x) + "," + str(y) + "\n")
+		else:
+			f.write(path + "\n")
 	f.close()
 
 def main(args):
