@@ -86,16 +86,16 @@ def genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mu
 			break
 		# Prune population for next iteration
 		population = prune_pop(pop, children)
-		print("Time elapsed: ", time.time()-start_time)
+		# print("Time elapsed: ", time.time()-start_time)
 	return tuple(best_path)
 
 # Calculate the fitness of a state
 # Calculated by total distance of state path
 def calc_distance(state, inputs, domain):
 	distance = 0
-	for i in range(len(state)-1):
-		loc1 = get_location(state[i], inputs)
-		loc2 = get_location(state[i+1], inputs)
+	for i in range(len(state)):
+		loc1 = get_location(state[i-1], inputs)
+		loc2 = get_location(state[i], inputs)
 		distance += get_distance(loc1, loc2, domain)
 	return distance
 
@@ -179,19 +179,24 @@ def crossover(parents, mutation_rate, method=1):
 
 # Remove duplicate values/add in missing values from crossover
 def fix_child(child):
-	doubles = []
+	multiples = []
 	missing = []
-	for c in string.ascii_uppercase[:len(child)]:
-		if child.count(c) == 0:
-			missing.append(c)
-		if child.count(c) == 2:
-			doubles.append(c)
-	child = list(child)
-	for i in range(len(child)):
-		if child[i] in doubles:
-			doubles.remove(child[i])
-			child[i] = missing[random.randint(0, len(missing)-1)]
-			missing = missing[1:]
+	fixed = False
+	while(not fixed):
+		fixed = True
+		for c in string.ascii_uppercase[:len(child)]:
+			if child.count(c) == 0:
+				fixed = False
+				missing.append(c)
+			if child.count(c) > 1:
+				fixed = False
+				multiples.append(c)
+		child = list(child)
+		for i in range(len(child)):
+			if child[i] in multiples:
+				multiples.remove(child[i])
+				child[i] = missing[random.randint(0, len(missing)-1)]
+				missing = missing[1:]
 	return ''.join(child)
 
 # Select two states to act as parents
@@ -257,10 +262,11 @@ def read_data(fname, domain):
 		f.close()
 		return towns
 
-def write_path_to_file(path, locs, domain):
+def write_path_to_file(path, locs, domain, dist):
 	fname = "output.txt"
 	with open(fname, 'w+') as f:
 		f.write(str(domain) + "\n")
+		f.write(str(dist) + "\n")
 		if domain == 1:
 			for i in range(len(path)):
 				loc = get_location(path[i], locs)
@@ -281,7 +287,7 @@ def main(args):
 	inputs = read_data(fname, domain)
 	best_path = genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mutation_method, domain)
 	print("Best path is: " + best_path[1] + " with distance " + str(best_path[0]))
-	write_path_to_file(best_path[1], inputs, domain)
+	write_path_to_file(best_path[1], inputs, domain, best_path[0])
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()

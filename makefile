@@ -16,3 +16,9 @@ domain1-10min-100init:
 domain2-single:
 	python assign2.py -t 0 -d 2 towns.txt
 	python graph.py output.txt
+domain2-half:
+	python assign2.py -t 30 -d 2 towns.txt
+	python graph.py output.txt	
+domain2-minute:
+	python assign2.py -t 60 -d 2 towns.txt
+	python graph.py output.txt
