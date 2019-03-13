@@ -154,14 +154,13 @@ def mutate(state, mutation=1):
 def crossover(parents, mutation_rate, method=1):
 	children = []
 	while len(parents) > 0:
+		i, j = 0, 0
+		while i == j:
+			i, j = random.randint(0, len(parents)-1), random.randint(0, len(parents)-1)
+		parent1 = parents[i]
+		parent2 = parents[j]
+		child= ''
 		if method == 1:
-			i, j = 0, 0
-			while i == j:
-				i, j = random.randint(0, len(parents)-1), random.randint(0, len(parents)-1)
-			parent1 = parents[i]
-			parent2 = parents[j]
-
-			child= ''
 			pos = random.randint(0, len(parent1) -1)
 			child += parent1[:pos]
 			child += parent2[pos:]
@@ -170,12 +169,70 @@ def crossover(parents, mutation_rate, method=1):
 			if(random.randint(0, 99) < mutation_rate):
 				child = mutate(child)
 
+			child = fix_child(child)
 			children.append(child)
 			parents.remove(parent1)
 			parents.remove(parent2)
 		else:
-			pass
+			neighbours = dict()
+			for c in string.ascii_uppercase[:len(parent1)]:
+				n_set = set()
+				i = parent1.index(c)
+				n_set.add(parent1[i-1])
+				if(i+1 >= len(parent1)):
+					i = -1
+				n_set.add(parent1[i+1])
+				i = parent2.index(c)
+				n_set.add(parent2[i-1])
+				if(i+1 >= len(parent2)):
+					i = -1
+				n_set.add(parent2[i+1])
+				neighbours[c] = n_set
+			r = random.randint(0,1)
+			if r == 0:
+				child += parent1[0]
+			else:
+				child += parent2[0]
+			neighbours = remove_element(neighbours, child[0])
+			while len(child) < len(parent1):
+				least = get_least_neighbours(neighbours)
+				neighbours.pop(least, None)
+				child+= least
+				neighbours = remove_element(neighbours, least)
+			child = fix_child(child)
+			if(random.randint(0, 99) < mutation_rate):
+				child = mutate(child)
+
+			children.append(child)
+			parents.remove(parent1)
+			parents.remove(parent2)
 	return children
+
+# Find the neighbour set with the fewest elements
+def get_least_neighbours(neighbours):
+	least_neighbours = []
+	least = 999
+	for key in neighbours.keys():
+		if len(neighbours[key]) < least:
+			least_neighbours = []
+			least = len(neighbours[key])
+			least_neighbours.append(key)
+		elif len(neighbours[key]) == least:
+			least_neighbours.append(key)
+	if(len(least_neighbours) == 1):
+		return least_neighbours[0]
+	else:
+		i = random.randint(0, len(least_neighbours)-1)
+		return least_neighbours[i]
+
+# Removes the given element from each set in neighbours, if the element
+# exists in the set.
+def remove_element(neighbours, element):
+	for key in neighbours.keys():
+		s = neighbours[key]
+		s.discard(element)
+		neighbours[key] = s	
+	return neighbours
 
 # Remove duplicate values/add in missing values from crossover
 def fix_child(child):
@@ -199,7 +256,7 @@ def fix_child(child):
 				missing = missing[1:]
 	return ''.join(child)
 
-# Select two states to act as parents
+# Select states to act as parents
 def select_parents(pop, num_parents):
 	fitness_sum = 0
 	parents = []
@@ -221,7 +278,7 @@ def select_parents(pop, num_parents):
 		threshold = random.randint(0, int(fitness_sum))
 	return parents
 
-# Prune population, should just return states
+# Prune population
 def prune_pop(pop, children):
 	new_pop = []
 	pop.sort(reverse=True)
@@ -262,6 +319,7 @@ def read_data(fname, domain):
 		f.close()
 		return towns
 
+# Write output file for use in graph generation
 def write_path_to_file(path, locs, domain, dist):
 	fname = "output.txt"
 	with open(fname, 'w+') as f:
@@ -284,6 +342,14 @@ def main(args):
 	init_pop = args.init_pop
 	crossover_method = args.crossover_method
 	mutation_method = args.mutation_method
+
+	print("Finding best path for domain " + str(domain) + " with parameters:")
+	print("Teminates after " + str(term_criteria) + " seconds")
+	print("With an initial population of " + str(init_pop))
+	print("Mutates at a rate of " + str(mutation_rate) + "%")
+	print("Using mutation method " + str(mutation_method))
+	print("Using crossover method " + str(crossover_method))
+
 	inputs = read_data(fname, domain)
 	best_path = genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mutation_method, domain)
 	print("Best path is: " + best_path[1] + " with distance " + str(best_path[0]))

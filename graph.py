@@ -10,7 +10,7 @@ def plot_route_1(points, dist):
 	plt.plot([points[0][0], points[-1][0]],[points[0][1], points[-1][1]], 'ro--')
 	plt.plot(points[0][0], points[0][1], 'bo')
 	plt.title("Total distance of path is " + str(dist))
-	plt.savefig("route.png", bbox_inches='tight')
+	plt.savefig("route_domain_1.png", bbox_inches='tight')
 
 	plt.show()
 
@@ -41,6 +41,7 @@ def plot_route_2(path, dist):
 	title = title[:-3]
 	plt.title(title, fontsize='small')
 	plt.xlabel("Total distance of path is " + str(dist))
+	plt.savefig("route_domain_2.png", bbox_inches="tight")
 	plt.show()
 def read_data(fname):
 	points = []
