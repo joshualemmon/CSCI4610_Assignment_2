@@ -4,12 +4,13 @@ import argparse
 def plot_route_1(points, dist):
 	for i in range(len(points)-1):
 		if i == 0:
-			plt.plot([points[i][0], points[i+1][0]],[points[i][1], points[i+1][1]], 'ro-')
+			plt.plot([points[i][0], points[i+1][0]],[points[i][1], points[i+1][1]], 'bo-')
 		else:
 			plt.plot([points[i][0], points[i+1][0]],[points[i][1], points[i+1][1]], 'ro--')
 	plt.plot([points[0][0], points[-1][0]],[points[0][1], points[-1][1]], 'ro--')
 	plt.plot(points[0][0], points[0][1], 'bo')
-	plt.title("Total distance of path is " + str(dist))
+	plt.title("Blue node is start point. Blue path is first move.")
+	plt.xlabel("Total distance of path is " + str(dist))
 	plt.savefig("route_domain_1.png", bbox_inches='tight')
 
 	plt.show()
@@ -52,7 +53,7 @@ def read_data(fname):
 			if i == 0:
 				domain = int(l)
 			elif i == 1:
-				dist = int(l)
+				dist = l.strip('\n')
 			else:
 				if domain == 1:
 					l = l.split(",")
