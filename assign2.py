@@ -79,6 +79,7 @@ def genetic(inputs, term_criteria, mutation_rate, init_pop, crossover_method, mu
 		# Check if algorithm should be terminated
 		# Termination criteria is runtime of algorithm surpasses given time
 		# If terminated will return the most fit (i.e. shortest path) state
+		print("Time elapsed: " + str(time.time() - start_time))
 		if(time.time() - start_time >= term_criteria):
 			pop.sort(reverse=True)
 			best_path = list(pop[0])
